@@ -138,10 +138,13 @@ python l3250_duplex_printer.py
 
 1. Click **Choose PDF** and select your document.
 2. Select your printer from the dropdown (click **Refresh** if it's missing).
-3. Select the **flip direction** (see below).
-4. Click **Start Duplex Printing**.
-5. Wait for the first pass to finish, then **reload the paper** following the [instructions below](#reloading-the-paper).
-6. Click **OK** in the popup to print the second pass.
+3. Choose **All pages** or **Page range**. Page ranges accept individual pages,
+   comma-separated pages, and hyphenated ranges, such as `1-5`, `2, 4, 7-9`,
+   `10-` (page 10 to the end), or `-4` (the first four pages).
+4. Select the **flip direction** (see below).
+5. Click **Start Duplex Printing**.
+6. Wait for the first pass to finish, then **reload the paper** following the [instructions below](#reloading-the-paper).
+7. Click **OK** in the popup to print the second pass.
 
 ## Choosing the flip direction
 
@@ -268,7 +271,7 @@ epson-l3250-manual-duplex/
 
 Ideas for future versions:
 
-- [ ] Page range selection
+- [x] Page range selection
 - [ ] Number of copies
 - [ ] Black and white / draft mode checkbox
 - [ ] "Even pages first" checkbox
