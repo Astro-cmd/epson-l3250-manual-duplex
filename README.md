@@ -6,9 +6,8 @@ A small Windows desktop app that adds **manual double-sided (duplex) printing** 
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-> **Screenshot:** add a screenshot of the app here, for example `docs/screenshot.png`.
->
-> `![App screenshot](docs/screenshot.png)`
+<!-- Add a screenshot: save it as docs/screenshot.png and uncomment the line below -->
+<!-- ![App screenshot](docs/screenshot.png) -->
 
 ---
 
@@ -20,6 +19,7 @@ A small Windows desktop app that adds **manual double-sided (duplex) printing** 
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Running from WSL](#running-from-wsl)
 - [Choosing the flip direction](#choosing-the-flip-direction)
 - [Reloading the paper](#reloading-the-paper)
 - [Testing and calibration](#testing-and-calibration)
@@ -47,14 +47,14 @@ The page order and rotation are handled for you, so each sheet comes out with th
 ## Features
 
 - Manual duplex printing from any PDF
-- Page pairing handled automatically (page 1 and 2 on sheet 1, 3 and 4 on sheet 2, and so on)
+- Page pairing handled automatically (pages 1 and 2 on sheet 1, 3 and 4 on sheet 2, and so on)
 - **Long-edge** (book/document) and **short-edge** (calendar/notebook) flip modes
 - Automatic **180° rotation** of the back pages in short-edge mode
 - **Odd page counts** handled with a blank back side on the last sheet
 - Printer picker listing all installed Windows printers
 - Silent printing through SumatraPDF, so it does not depend on your default PDF reader
 - Temporary files are created and cleaned up automatically
-- Works with other single-sided printers too (not tested on them yet)
+- Launcher scripts for Windows (`.bat`) and WSL (`.sh`)
 
 ## How it works
 
@@ -80,7 +80,7 @@ SumatraPDF.exe -print-to "<printer name>" -print-settings "fit,paper=A4" -silent
 ## Requirements
 
 - **Windows 10 or 11**
-- **Python 3.9 or newer**
+- **Python 3.9 or newer** (Windows version)
 - **SumatraPDF** (free)
 - An installed Windows driver for your printer (the Epson L3250 driver)
 - Python packages: `pywin32` and `pypdf` (listed in `requirements.txt`)
@@ -90,7 +90,7 @@ SumatraPDF.exe -print-to "<printer name>" -print-settings "fit,paper=A4" -silent
 **1. Clone the repository**
 
 ```powershell
-git clone https://github.com/<your-username>/epson-l3250-manual-duplex.git
+git clone https://github.com/Astro-cmd/epson-l3250-manual-duplex.git
 cd epson-l3250-manual-duplex
 ```
 
@@ -132,9 +132,19 @@ If this prints, the app will print too.
 
 ## Usage
 
+Start the app in any of these ways:
+
 ```powershell
-python l3250_duplex_printer.py
+# Double-click run_l3250.bat, or from a terminal:
+.\run_l3250.bat
+
+# Or run the script directly:
+python l3250_duplex.py
 ```
+
+`run_l3250.bat` looks for Windows Python (`py`, then `python`) and starts the app. If Python is missing, it prints install instructions.
+
+Then:
 
 1. Click **Choose PDF** and select your document.
 2. Select your printer from the dropdown (click **Refresh** if it's missing).
@@ -142,6 +152,17 @@ python l3250_duplex_printer.py
 4. Click **Start Duplex Printing**.
 5. Wait for the first pass to finish, then **reload the paper** following the [instructions below](#reloading-the-paper).
 6. Click **OK** in the popup to print the second pass.
+
+## Running from WSL
+
+The app needs **Windows Python**, because it talks to Windows printers through `pywin32`. If you work in WSL, the helper scripts run the Windows Python for you:
+
+```bash
+./setup_wsl.sh    # installs requirements.txt using Windows Python (py.exe or python.exe)
+./run_l3250.sh    # starts the app
+```
+
+Install Python for Windows first. Python installed inside WSL cannot access Windows printers.
 
 ## Choosing the flip direction
 
@@ -170,7 +191,7 @@ For **short-edge** mode, flip the stack over the **short** edge instead. The app
 
 ## Testing and calibration
 
-Always test with a short document first. A good test PDF has a **big page number**, a **"TOP" arrow**, and a **corner marker** on every page, so upside-down or wrongly ordered pages are easy to spot. An 8-page test file is included at `tests/duplex_test_8_pages.pdf`.
+Always test with a short document first. The repository includes **`duplex_test_8_pages.pdf`**, an 8-page A4 file with a **big page number**, a **"TOP" arrow**, and a **corner marker** on every page, so upside-down or wrongly ordered pages are easy to spot.
 
 **Expected result for the 8-page test (4 sheets):**
 
@@ -187,7 +208,7 @@ Also test a **3-page PDF** to confirm the blank-back logic for odd page counts.
 
 ## Configuration
 
-Edit the constants at the top of `l3250_duplex_printer.py`:
+Edit the constants at the top of `l3250_duplex.py`:
 
 ```python
 # SumatraPDF print settings. Add ",monochrome" for black and white.
@@ -210,33 +231,46 @@ Print quality and paper type (plain, photo, and so on) come from the Epson drive
 
 ## Troubleshooting
 
-**"SumatraPDF not found."**
+### "SumatraPDF not found."
+
 Install SumatraPDF (see [Installation](#installation)) or add its path to `find_sumatra()`.
 
-**"A device attached to the system is not functioning" (error 31)**
+### "A device attached to the system is not functioning" (error 31)
+
 This was the error from the older `ShellExecute` method, which relied on the default PDF app's print handler. This app uses SumatraPDF instead, so you should not see it. If you do, check that the printer is online and the queue isn't paused.
 
-**The printer is not in the dropdown**
+### The printer is not in the dropdown
+
 Click **Refresh**. Check that the printer appears in Windows under Printers & scanners.
 
-**Nothing prints, and no error appears**
+### Nothing prints, and no error appears
+
 Open the print queue and check that the printer isn't offline, paused, or showing "Use printer offline". Then run the standalone SumatraPDF test from the installation section.
 
-**The back sides are upside down**
+### The back sides are upside down
+
 - Long-edge mode: reload the stack rotated 180°, or change `back_rotation` to `180` for long edge in `start_print`.
 - Short-edge mode: remove the 180° rotation (set `back_rotation = 0`).
 
-**The pages are paired wrongly (page 2 behind page 3, for example)**
+### The pages are paired wrongly (page 2 behind page 3, for example)
+
 The stack order is wrong when reloading. Take the stack from the tray in the same order as it came out and do not reverse it.
 
-**Each sheet has the right pages, but front and back are swapped**
+### Each sheet has the right pages, but front and back are swapped
+
 Swap the two `send_to_printer` calls in `start_print` so the other set prints first.
 
-**Page sizes look wrong or content is cut off**
+### Page sizes look wrong or content is cut off
+
 Set `paper=A4` (or your paper size) in `PRINT_SETTINGS` and use `fit`. Confirm the paper size in the Epson printing preferences too.
 
-**Ink smudges on the second pass**
+### Ink smudges on the second pass
+
 Wait longer before reloading, or use a higher-quality paper setting in the driver.
+
+### The launcher says "Windows Python was not found"
+
+Install Python for Windows from <https://www.python.org/downloads/> and tick **Add python.exe to PATH** during setup.
 
 ## Building a standalone .exe
 
@@ -244,24 +278,22 @@ You can build a single executable so others can run the app without installing P
 
 ```powershell
 pip install pyinstaller
-pyinstaller --onefile --windowed l3250_duplex_printer.py
+pyinstaller --onefile --windowed l3250_duplex.py
 ```
 
-The executable will be created in the `dist/` folder. SumatraPDF still needs to be installed on the target PC, or placed in one of the locations the app searches.
+The executable is created in the `dist/` folder. SumatraPDF still needs to be installed on the target PC, or placed in one of the locations the app searches.
 
 ## Project structure
 
 ```
 epson-l3250-manual-duplex/
-├── l3250_duplex_printer.py     # The application
-├── requirements.txt            # Python dependencies
-├── README.md
-├── LICENSE
-├── .gitignore
-├── docs/
-│   └── screenshot.png          # App screenshot (add your own)
-└── tests/
-    └── duplex_test_8_pages.pdf # Calibration PDF
+├── l3250_duplex.py           # The application
+├── requirements.txt          # Python dependencies
+├── run_l3250.bat             # Windows launcher
+├── run_l3250.sh              # WSL launcher
+├── setup_wsl.sh              # Installs dependencies from WSL using Windows Python
+├── duplex_test_8_pages.pdf   # Calibration PDF
+└── README.md
 ```
 
 ## Roadmap
@@ -291,7 +323,7 @@ Contributions are welcome.
 4. Push the branch: `git push origin feature/your-feature`
 5. Open a pull request
 
-If you test the app on another printer, please open an issue with the printer model and what reload steps worked, so the compatibility list can grow.
+If you test the app on another printer, please open an issue with the printer model and the reload steps that worked, so the compatibility list can grow.
 
 ## License
 
